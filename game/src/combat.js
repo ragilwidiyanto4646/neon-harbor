@@ -1,0 +1,1 @@
+export function shoot(p,input,enemies,audio){if(!input.mouse.down||p.vehicle||p.ammo<=0)return;p.fire-=1/60;if(p.fire>0)return;p.fire=.18;p.ammo--;audio.shot();let target=enemies.filter(e=>e.hp>0).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];if(target&&Math.hypot(target.x-p.x,target.y-p.y)<330)target.hp-=30}export function makeEnemies(){return[]}

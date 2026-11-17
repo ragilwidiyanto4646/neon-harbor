@@ -1,0 +1,1 @@
+const KEY='neon-harbor-save';export function saveGame(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}}export function loadGame(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}}

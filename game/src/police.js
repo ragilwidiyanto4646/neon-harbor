@@ -1,0 +1,3 @@
+export function makePolice(){return{units:[],officers:[],heli:null,lost:0}}
+export function raise(w,n=1){w.level=Math.min(5,w.level+n);w.lost=0}
+export function updatePolice(w,p,dt){if(p.wanted>0){w.lost+=dt;if(w.units.length<p.wanted*2){const i=w.units.length;w.units.push({x:p.x-250-i*54,y:p.y-170+(i%2)*110,angle:0,speed:2.2,hp:120,type:'Police'})}if(p.wanted>=5&&!w.heli)w.heli={x:p.x+100,y:p.y-250,a:0};for(const u of w.units){const a=Math.atan2(p.y-u.y,p.x-u.x);u.angle=a;u.x+=Math.cos(a)*u.speed;u.y+=Math.sin(a)*u.speed;if(Math.hypot(u.x-p.x,u.y-p.y)<28){p.hp-=.12;if(!p.vehicle&&p.wanted>=3)p.hp-=.12}}if(w.lost>35){p.wanted=Math.max(0,p.wanted-1);w.lost=0;if(!p.wanted){w.units=[];w.heli=null}}}else{w.units=[];w.heli=null}}
