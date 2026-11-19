@@ -1,19 +1,27 @@
-// A tiny static server for game/ (Node 22, standard library only), so an entry can be played
-// locally without a build step: `node serve.ts` serves game/ on http://localhost:8080.
-// It sends the MIME types a browser game needs, refuses any path outside game/, and otherwise
-// does nothing clever: this is a development convenience, not a web server for the internet.
-import { createReadStream, statSync } from 'node:fs';
+// serve.ts — a tiny static server for the Neon Harbor game.
+//
+// Node standard library only. Serves files under the game/ folder on
+// 127.0.0.1, with the port from --port (default 8080). Paths that try
+// to escape the game folder are refused.
+
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { join, normalize, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = resolve(fileURLToPath(new URL('./game', import.meta.url)));
-const args = process.argv.slice(2);
-const portIndex = args.indexOf('--port');
-const requested = portIndex === -1 ? 8080 : Number(args[portIndex + 1]);
-const port = Number.isInteger(requested) && requested > 0 && requested < 65536 ? requested : 8080;
+const here = fileURLToPath(new URL('.', import.meta.url));
+const gameRoot = join(here, 'game');
 
-const MIME: Record<string, string> = {
+// Read the port from --port, falling back to 8080.
+let port = 8080;
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i += 1) {
+  if (args[i] === '--port' && args[i + 1]) {
+    port = parseInt(args[i + 1], 10);
+  }
+}
+
+const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
@@ -22,51 +30,44 @@ const MIME: Record<string, string> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.glb': 'model/gltf-binary',
-  '.gltf': 'model/gltf+json',
-  '.bin': 'application/octet-stream',
-  '.wasm': 'application/wasm',
-  '.wav': 'audio/wav',
-  '.mp3': 'audio/mpeg',
-  '.ogg': 'audio/ogg',
-  '.txt': 'text/plain; charset=utf-8',
 };
 
-createServer((request, response) => {
-  const url = new URL(request.url ?? '/', 'http://localhost');
-  let pathname: string;
+const server = createServer(async (request, response) => {
   try {
-    pathname = decodeURIComponent(url.pathname);
-  } catch {
-    response.writeHead(400).end('bad request');
-    return;
+    const url = new URL(request.url, 'http://127.0.0.1');
+    let pathname = decodeURIComponent(url.pathname);
+    if (pathname === '/') {
+      pathname = '/index.html';
+    }
+
+    // Resolve the path and refuse anything outside game/. The check
+    // must include the path separator: a plain startsWith(gameRoot)
+    // would also accept a sibling directory named "game-evil".
+    const resolved = normalize(join(gameRoot, pathname));
+    if (resolved !== gameRoot && !resolved.startsWith(gameRoot + sep)) {
+      response.writeHead(403, { 'Content-Type': 'text/plain' });
+      response.end('Forbidden\n');
+      return;
+    }
+
+    const info = await stat(resolved);
+    if (!info.isFile()) {
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.end('Not found\n');
+      return;
+    }
+
+    const body = await readFile(resolved);
+    const type = MIME_TYPES[extname(resolved)] || 'application/octet-stream';
+    response.writeHead(200, { 'Content-Type': type, 'Content-Length': body.length });
+    response.end(body);
+  } catch (error) {
+    response.writeHead(404, { 'Content-Type': 'text/plain' });
+    response.end('Not found\n');
   }
-  if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(root, normalize(pathname)));
-  if (file !== root && !file.startsWith(root + sep)) {
-    response.writeHead(403).end('forbidden');
-    return;
-  }
-  let size: number;
-  try {
-    const stats = statSync(file);
-    if (!stats.isFile()) throw new Error('not a file');
-    size = stats.size;
-  } catch {
-    response.writeHead(404).end('not found');
-    return;
-  }
-  response.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
-    'content-length': size,
-    'cache-control': 'no-store',
-  });
-  createReadStream(file).pipe(response);
-}).listen(port, '127.0.0.1', () => {
-  console.log(`game/ is on http://localhost:${port}`);
+});
+
+server.listen(port, '127.0.0.1', () => {
+  console.log('Neon Harbor serving at http://127.0.0.1:' + port + '/');
 });

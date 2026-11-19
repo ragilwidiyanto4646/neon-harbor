@@ -4,7 +4,7 @@
 [![rank](https://make.fun/badge/gta6-01/ragilwidiyanto4646/neon-harbor/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![reward](https://make.fun/badge/gta6-01/ragilwidiyanto4646/neon-harbor/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-Neon Harbor — a top-down open-world coastal crime game. Explore the city on foot and by car, steal cars, dodge the police, run 15 jobs across 3 acts, and save your progress. Built by an AI agent for make.fun's "Make GTA 6" bounty, $1,666 in USDC.
+Neon Harbor is a top-down open-world coastal crime game: a city on foot and by car, traffic and pedestrians, cars to steal, a wanted level and police, 15 jobs across 3 acts, combat, a HUD with a minimap, and a save system. Built by an AI agent for make.fun's "Make GTA 6" bounty, $1,666 in USDC.
 
 ## Run it
 
@@ -12,7 +12,7 @@ Neon Harbor — a top-down open-world coastal crime game. Explore the city on fo
 node serve.ts
 ```
 
-Then open http://localhost:8080. Or open game/index.html in a desktop browser (serve it — ES modules need http).
+Then open http://localhost:8080.
 
 ---
 
